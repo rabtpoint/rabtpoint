@@ -1,0 +1,10 @@
+import bcrypt from 'bcryptjs';
+import express from 'express';
+import { requireAuth } from '../middleware/auth.js';
+import { User } from '../models/User.js';
+import { createToken } from '../utils/token.js';
+const router=express.Router();
+router.post('/signup',async(req,res)=>{ try{ const {name,email,password,photo,country,state,district,latitude,longitude}=req.body; if(!name||!email||!password||!country||!state||!district||latitude===undefined||longitude===undefined) return res.status(400).json({message:'All signup fields are required'}); if(await User.findOne({email})) return res.status(409).json({message:'Email already registered'}); const user=await User.create({name,email,password:await bcrypt.hash(password,12),photo,location:{country,state,district,latitude:Number(latitude),longitude:Number(longitude)}}); res.status(201).json({token:createToken(user._id),user:user.toPublicJSON()}); }catch(e){res.status(500).json({message:e.message});} });
+router.post('/login',async(req,res)=>{ try{ const {email,password}=req.body; const user=await User.findOne({email}); if(!user||!(await bcrypt.compare(password,user.password))) return res.status(401).json({message:'Invalid email or password'}); res.json({token:createToken(user._id),user:user.toPublicJSON()}); }catch(e){res.status(500).json({message:e.message});} });
+router.get('/me',requireAuth,(req,res)=>res.json({user:req.user.toPublicJSON()}));
+export default router;

@@ -1,0 +1,1 @@
+export const urls={ api:import.meta.env.VITE_API_URL||'http://localhost:5000/api', local:import.meta.env.VITE_LOCAL_URL||'http://localhost:5173', website:import.meta.env.VITE_WEBSITE_URL||'https://rabtpoint.com' };
