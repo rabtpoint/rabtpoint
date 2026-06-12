@@ -33,14 +33,6 @@ const publicPages = {
   }
 };
 
-const navLinks = [
-  ['Home', '/'],
-  ['Download', '/download'],
-  ['Career', '/career'],
-  ['Login', '/login'],
-  ['Admin', '/admin']
-];
-
 export const isPublicPage = (path) => Boolean(publicPages[path]);
 
 export default function PublicPage({ path }) {
@@ -52,13 +44,6 @@ export default function PublicPage({ path }) {
         <a className="public-logo" href="/">
           RabtPoint
         </a>
-        <nav className="public-nav" aria-label="Main navigation">
-          {navLinks.map(([label, href]) => (
-            <a className={path === href ? 'active' : ''} href={href} key={href}>
-              {label}
-            </a>
-          ))}
-        </nav>
       </header>
 
       <section className="public-hero">
