@@ -1,6 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { api, uploadImage } from '../services/api';
+import { SITE, loginMeta } from '../data/publicPages';
+
+const applyLoginSeo = () => {
+  document.title = `${loginMeta.title} | RabtPoint`;
+
+  let description = document.querySelector('meta[name="description"]');
+  if (!description) {
+    description = document.createElement('meta');
+    description.setAttribute('name', 'description');
+    document.head.appendChild(description);
+  }
+  description.setAttribute('content', loginMeta.description);
+
+  let canonical = document.querySelector('link[rel="canonical"]');
+  if (!canonical) {
+    canonical = document.createElement('link');
+    canonical.setAttribute('rel', 'canonical');
+    document.head.appendChild(canonical);
+  }
+  canonical.setAttribute('href', `${SITE}/login`);
+};
 
 const initialForm = {
   name: '',
@@ -16,6 +37,11 @@ const initialForm = {
 
 export default function AuthGate() {
   const { login } = useApp();
+
+  useEffect(() => {
+    applyLoginSeo();
+  }, []);
+
   const [mode, setMode] = useState('signup');
   const [form, setForm] = useState(initialForm);
   const [otp, setOtp] = useState('');
@@ -124,10 +150,8 @@ export default function AuthGate() {
       <section className="auth-card">
         <div>
           <p className="eyebrow">RabtPoint MERN</p>
-          <h1>Sign in karo aur apni permanent location set karo.</h1>
-          <p className="muted">
-            Signup se pehle email OTP verify hoga. Verify hone ke baad data MongoDB me save hoga.
-          </p>
+          <h1>Login to RabtPoint</h1>
+          <p className="muted">{loginMeta.intro}</p>
         </div>
 
         <div className="auth-tabs">

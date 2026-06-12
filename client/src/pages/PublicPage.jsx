@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { publicPagesMeta, canonicalFor } from '../data/publicPages.js';
+import { publicPagesMeta, navLinks, canonicalFor } from '../data/publicPages.js';
 
 export const isPublicPage = (path) => Boolean(publicPagesMeta[path]);
 
@@ -42,13 +42,20 @@ export default function PublicPage({ path }) {
         <a className="public-logo" href="/">
           RabtPoint
         </a>
+        <nav className="public-nav">
+          {navLinks.map((link) => (
+            <a key={link.href} href={link.href} aria-current={link.href === path ? 'page' : undefined}>
+              {link.label}
+            </a>
+          ))}
+        </nav>
       </header>
 
       <section className="public-hero">
         <div>
           <p className="eyebrow">{page.eyebrow}</p>
           <h1>{page.title}</h1>
-          <p>{page.description}</p>
+          <p>{page.intro}</p>
           <a className="public-cta" href={page.ctaHref}>
             {page.cta}
           </a>
@@ -62,6 +69,40 @@ export default function PublicPage({ path }) {
           <span>Email Verification</span>
         </div>
       </section>
+
+      {page.sections?.length > 0 && (
+        <section className="public-sections">
+          {page.sections.map((item) => (
+            <article key={item.h} className="public-section-card">
+              <h2>{item.h}</h2>
+              <p>{item.p}</p>
+            </article>
+          ))}
+        </section>
+      )}
+
+      {page.faqs?.length > 0 && (
+        <section className="public-faq">
+          <h2>Frequently asked questions</h2>
+          {page.faqs.map((faq) => (
+            <details key={faq.q} className="public-faq-item">
+              <summary>{faq.q}</summary>
+              <p>{faq.a}</p>
+            </details>
+          ))}
+        </section>
+      )}
+
+      <footer className="public-footer">
+        <nav className="public-footer-nav">
+          {navLinks.map((link) => (
+            <a key={link.href} href={link.href}>
+              {link.label}
+            </a>
+          ))}
+        </nav>
+        <p>© {new Date().getFullYear()} RabtPoint — social location network.</p>
+      </footer>
     </main>
   );
 }
