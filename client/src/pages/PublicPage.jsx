@@ -1,3 +1,7 @@
+import { useEffect } from 'react';
+
+const SITE = 'https://rabtpoint.com';
+
 const publicPages = {
   '/': {
     eyebrow: 'Home',
@@ -35,8 +39,40 @@ const publicPages = {
 
 export const isPublicPage = (path) => Boolean(publicPages[path]);
 
+const setMetaTag = (name, content) => {
+  let tag = document.querySelector(`meta[name="${name}"]`);
+
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute('name', name);
+    document.head.appendChild(tag);
+  }
+
+  tag.setAttribute('content', content);
+};
+
+const setCanonical = (href) => {
+  let link = document.querySelector('link[rel="canonical"]');
+
+  if (!link) {
+    link = document.createElement('link');
+    link.setAttribute('rel', 'canonical');
+    document.head.appendChild(link);
+  }
+
+  link.setAttribute('href', href);
+};
+
 export default function PublicPage({ path }) {
   const page = publicPages[path] || publicPages['/'];
+
+  useEffect(() => {
+    const canonicalUrl = path === '/' ? `${SITE}/` : `${SITE}${path}`;
+
+    document.title = `${page.title} | RabtPoint`;
+    setMetaTag('description', page.description);
+    setCanonical(canonicalUrl);
+  }, [path, page.title, page.description]);
 
   return (
     <main className="public-shell">
