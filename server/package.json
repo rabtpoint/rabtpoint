@@ -1,1 +1,28 @@
-{"name":"rabtpoint-server","version":"1.0.0","type":"module","main":"src/index.js","scripts":{"dev":"nodemon src/index.js","start":"node src/index.js"},"dependencies":{"bcryptjs":"latest","cors":"latest","dotenv":"latest","express":"latest","jsonwebtoken":"latest","mongoose":"latest","morgan":"latest"},"devDependencies":{"nodemon":"latest"}}
+{
+  "name": "rabtpoint-server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "bcryptjs": "latest",
+    "cloudinary": "^2.10.0",
+    "cors": "latest",
+    "dotenv": "latest",
+    "express": "latest",
+    "jsonwebtoken": "latest",
+    "mongoose": "latest",
+    "morgan": "latest",
+    "multer": "^2.1.1",
+    "resend": "^6.12.4"
+  },
+  "devDependencies": {
+    "nodemon": "latest"
+  }
+}

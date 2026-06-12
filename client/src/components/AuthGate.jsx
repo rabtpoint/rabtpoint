@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { api } from '../services/api';
-import { confirmEmailVerification, sendSignupVerification } from '../services/firebase';
+import { api, uploadImage } from '../services/api';
 
 const initialForm = {
   name: '',
@@ -15,25 +14,38 @@ const initialForm = {
   longitude: ''
 };
 
-const pendingSignupKey = 'rabtpoint_pending_signup';
-
-const readPendingSignup = () => {
-  const saved = localStorage.getItem(pendingSignupKey);
-  return saved ? JSON.parse(saved) : null;
-};
-
 export default function AuthGate() {
   const { login } = useApp();
   const [mode, setMode] = useState('signup');
-  const [form, setForm] = useState(() => readPendingSignup() || initialForm);
-  const [pendingSignup, setPendingSignup] = useState(() => readPendingSignup());
+  const [form, setForm] = useState(initialForm);
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
   const update = (field) => (event) => {
     setForm((current) => ({ ...current, [field]: event.target.value }));
+  };
+
+  const uploadPhoto = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setError('');
+    setUploadingPhoto(true);
+
+    try {
+      const data = await uploadImage(file);
+      setForm((current) => ({ ...current, photo: data.url }));
+      setInfo('Photo upload ho gaya.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   const useCurrentLocation = () => {
@@ -59,17 +71,6 @@ export default function AuthGate() {
     );
   };
 
-  const createBackendAccount = async (signupForm) => {
-    const session = await api('/auth/signup', {
-      method: 'POST',
-      body: JSON.stringify(signupForm)
-    });
-
-    localStorage.removeItem(pendingSignupKey);
-    setPendingSignup(null);
-    login(session);
-  };
-
   const submit = async (event) => {
     event.preventDefault();
     setError('');
@@ -87,10 +88,12 @@ export default function AuthGate() {
         return;
       }
 
-      await sendSignupVerification(form);
-      localStorage.setItem(pendingSignupKey, JSON.stringify(form));
-      setPendingSignup(form);
-      setInfo('Verification email bhej diya hai. Inbox/spam me link click karke niche wala button dabao.');
+      const data = await api('/auth/send-otp', {
+        method: 'POST',
+        body: JSON.stringify(form)
+      });
+      setOtpSent(true);
+      setInfo(data.message);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -98,15 +101,17 @@ export default function AuthGate() {
     }
   };
 
-  const finishVerifiedSignup = async () => {
+  const verifyOtpAndCreateAccount = async () => {
     setError('');
     setInfo('');
     setSubmitting(true);
 
     try {
-      const signupForm = pendingSignup || form;
-      await confirmEmailVerification(signupForm);
-      await createBackendAccount(signupForm);
+      const session = await api('/auth/verify-otp', {
+        method: 'POST',
+        body: JSON.stringify({ email: form.email, otp })
+      });
+      login(session);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -121,7 +126,7 @@ export default function AuthGate() {
           <p className="eyebrow">RabtPoint MERN</p>
           <h1>Sign in karo aur apni permanent location set karo.</h1>
           <p className="muted">
-            Signup se pehle Firebase email verification hoga. Verify hone ke baad data MongoDB me save hoga.
+            Signup se pehle email OTP verify hoga. Verify hone ke baad data MongoDB me save hoga.
           </p>
         </div>
 
@@ -139,6 +144,10 @@ export default function AuthGate() {
             <>
               <input required placeholder="Name" value={form.name} onChange={update('name')} />
               <input placeholder="Photo URL" value={form.photo} onChange={update('photo')} />
+              <label className="file-upload">
+                {uploadingPhoto ? 'Photo upload ho rahi hai...' : 'Upload profile photo'}
+                <input accept="image/*" type="file" onChange={uploadPhoto} />
+              </label>
             </>
           )}
 
@@ -166,13 +175,23 @@ export default function AuthGate() {
           {error && <p className="error-text">{error}</p>}
 
           <button className="primary-button" type="submit" disabled={submitting}>
-            {mode === 'signup' ? 'Send verification email' : 'Login'}
+            {mode === 'signup' ? (otpSent ? 'Resend OTP' : 'Send OTP') : 'Login'}
           </button>
 
-          {mode === 'signup' && pendingSignup && (
-            <button className="secondary-button" type="button" onClick={finishVerifiedSignup} disabled={submitting}>
-              I verified my email, create account
-            </button>
+          {mode === 'signup' && otpSent && (
+            <>
+              <input
+                required
+                inputMode="numeric"
+                maxLength="6"
+                placeholder="6 digit OTP"
+                value={otp}
+                onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
+              />
+              <button className="secondary-button" type="button" onClick={verifyOtpAndCreateAccount} disabled={submitting || otp.length !== 6}>
+                Verify OTP and create account
+              </button>
+            </>
           )}
         </form>
       </section>
