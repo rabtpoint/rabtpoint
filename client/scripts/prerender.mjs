@@ -29,6 +29,13 @@ const featureChips = ['Posts', 'Chat', 'OSM Map', '3D Globe', 'User Search', 'Em
   .map((chip) => `<span>${esc(chip)}</span>`)
   .join('');
 
+const publicPageLinks = () =>
+  navLinks.map((link) => ({
+    '@type': 'WebPage',
+    url: canonicalFor(link.href),
+    name: link.label
+  }));
+
 const sectionsHtml = (sections = []) =>
   sections.length
     ? `<section class="public-sections">${sections
@@ -86,13 +93,51 @@ const jsonLd = (path, page) => {
         '@id': `${SITE}/#website`,
         url: `${SITE}/`,
         name: 'RabtPoint',
-        description: page.description
+        description: page.description,
+        publisher: { '@id': `${SITE}/#organization` },
+        hasPart: publicPageLinks()
       },
       {
         '@type': 'Organization',
         '@id': `${SITE}/#organization`,
         name: 'RabtPoint',
         url: `${SITE}/`
+      },
+      {
+        '@type': 'SoftwareApplication',
+        '@id': `${SITE}/#softwareapplication`,
+        name: 'RabtPoint',
+        url: `${SITE}/`,
+        applicationCategory: 'SocialNetworkingApplication',
+        operatingSystem: 'Web, Android, iOS',
+        description: page.description,
+        offers: {
+          '@type': 'Offer',
+          price: '0',
+          priceCurrency: 'USD',
+          availability: 'https://schema.org/InStock',
+          url: `${SITE}/download`
+        },
+        featureList: [
+          'Location-based posts',
+          'Direct chat',
+          'People search by country, state and district',
+          'OpenStreetMap user map',
+          '3D globe view',
+          'Email OTP verification'
+        ],
+        publisher: { '@id': `${SITE}/#organization` }
+      },
+      {
+        '@type': 'ItemList',
+        '@id': `${SITE}/#sitelinks`,
+        name: 'RabtPoint site links',
+        itemListElement: navLinks.map((link, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: link.label,
+          url: canonicalFor(link.href)
+        }))
       }
     );
   }

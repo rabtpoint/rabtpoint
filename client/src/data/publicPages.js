@@ -11,9 +11,9 @@ export const navLinks = [
 export const publicPagesMeta = {
   '/': {
     eyebrow: 'Home',
-    title: 'RabtPoint social location network',
+    title: 'RabtPoint - Social Location App',
     description:
-      'RabtPoint ek social location network hai jahaan aap posts share karte ho, users se chat karte ho, country-state-district se log dhoondte ho aur OSM plus 3D globe map par verified user locations dekhte ho.',
+      'RabtPoint is a social location app for finding people by country, state and district, sharing posts, chatting with users, and exploring verified locations on maps.',
     cta: 'Login / Open App',
     ctaHref: '/login',
     intro:
@@ -57,9 +57,9 @@ export const publicPagesMeta = {
   },
   '/download': {
     eyebrow: 'Download',
-    title: 'Download RabtPoint app',
+    title: 'Download RabtPoint App',
     description:
-      'RabtPoint ka mobile experience responsive web app ke through abhi available hai. App ko phone ki home screen par add karo aur jald aane wale Android aur iOS apps ke updates yahan paao.',
+      'Download or install RabtPoint as a web app on your phone. Use posts, chat, search and map features from any modern mobile or desktop browser.',
     cta: 'Use Web App',
     ctaHref: '/login',
     intro:
@@ -95,9 +95,9 @@ export const publicPagesMeta = {
   },
   '/career': {
     eyebrow: 'Career',
-    title: 'Build the future of location based social networking',
+    title: 'RabtPoint Careers',
     description:
-      'RabtPoint me engineering, design, community aur operations roles ke liye opportunities yahan publish hongi. Location-based social networking banane ke shaukeen log humse connect kar sakte hain.',
+      'Explore RabtPoint career opportunities in engineering, design, product, community and operations for a location-based social networking platform.',
     cta: 'Join RabtPoint',
     ctaHref: 'mailto:careers@rabtpoint.com',
     intro:
@@ -133,9 +133,9 @@ export const publicPagesMeta = {
   },
   '/admin': {
     eyebrow: 'Admin',
-    title: 'RabtPoint admin access',
+    title: 'RabtPoint Admin Access',
     description:
-      'Admin area platform management ke liye reserved hai. Authorized team members secure login ke baad dashboard, users aur content ko manage kar sakte hain.',
+      'RabtPoint admin access is reserved for authorized team members who manage users, content, reports and platform safety.',
     cta: 'Go to Login',
     ctaHref: '/login',
     intro:
@@ -170,7 +170,7 @@ export const publicPagesMeta = {
 export const loginMeta = {
   title: 'Login to RabtPoint',
   description:
-    'RabtPoint me login karo ya naya account banao. Email OTP verification ke baad apni permanent location set karo aur posts, chat, map aur search ka istemaal karo.',
+    'Login to RabtPoint or create a new account with email OTP verification to use posts, chat, map and people search features.',
   intro:
     'RabtPoint me sign in karo ya naya account banao. Signup ke time email OTP verify hota hai, phir aap apna country, state, district aur location set karke posts, chat, map aur search ka istemaal kar sakte ho.'
 };

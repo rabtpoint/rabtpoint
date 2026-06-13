@@ -15,6 +15,18 @@ const setMetaTag = (name, content) => {
   tag.setAttribute('content', content);
 };
 
+const setPropertyMetaTag = (property, content) => {
+  let tag = document.querySelector(`meta[property="${property}"]`);
+
+  if (!tag) {
+    tag = document.createElement('meta');
+    tag.setAttribute('property', property);
+    document.head.appendChild(tag);
+  }
+
+  tag.setAttribute('content', content);
+};
+
 const setCanonical = (href) => {
   let link = document.querySelector('link[rel="canonical"]');
 
@@ -31,9 +43,18 @@ export default function PublicPage({ path }) {
   const page = publicPagesMeta[path] || publicPagesMeta['/'];
 
   useEffect(() => {
-    document.title = `${page.title} | RabtPoint`;
+    const title = `${page.title} | RabtPoint`;
+    const canonical = canonicalFor(path);
+
+    document.title = title;
     setMetaTag('description', page.description);
-    setCanonical(canonicalFor(path));
+    setMetaTag('twitter:card', 'summary');
+    setPropertyMetaTag('og:title', title);
+    setPropertyMetaTag('og:description', page.description);
+    setPropertyMetaTag('og:url', canonical);
+    setPropertyMetaTag('og:type', 'website');
+    setPropertyMetaTag('og:site_name', 'RabtPoint');
+    setCanonical(canonical);
   }, [path, page.title, page.description]);
 
   return (
