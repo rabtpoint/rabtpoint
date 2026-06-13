@@ -1,4 +1,7 @@
+import { legalPagesMeta } from './legalContent.js';
+
 export const SITE = 'https://rabtpoint.com';
+export { LEGAL_VERSION } from './legalContent.js';
 
 export const navLinks = [
   { label: 'Home', href: '/' },
@@ -164,15 +167,14 @@ export const publicPagesMeta = {
         a: 'Authorized members standard login page se sign in karte hain, jiske baad unhe admin dashboard ka access milta hai.'
       }
     ]
-  }
+  },
+  ...legalPagesMeta
 };
 
 export const loginMeta = {
-  title: 'Login to RabtPoint',
-  description:
-    'Login to RabtPoint or create a new account with email OTP verification to use posts, chat, map and people search features.',
-  intro:
-    'RabtPoint me sign in karo ya naya account banao. Signup ke time email OTP verify hota hai, phir aap apna country, state, district aur location set karke posts, chat, map aur search ka istemaal kar sakte ho.'
+  title: 'Sign in',
+  description: 'Sign in or create a RabtPoint account.',
+  intro: ''
 };
 
 export const canonicalFor = (path) => (path === '/' ? `${SITE}/` : `${SITE}${path}`);

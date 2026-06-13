@@ -1,9 +1,12 @@
 import cors from 'cors';
 import express from 'express';
 import morgan from 'morgan';
+import accountRoutes from './routes/account.routes.js';
+import adminRoutes from './routes/admin.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import messageRoutes from './routes/messages.routes.js';
 import postRoutes from './routes/posts.routes.js';
+import safetyRoutes from './routes/safety.routes.js';
 import uploadRoutes from './routes/uploads.routes.js';
 import userRoutes from './routes/users.routes.js';
 
@@ -53,6 +56,9 @@ export const createApp = () => {
   });
 
   app.use('/api/auth', authRoutes);
+  app.use('/api/account', accountRoutes);
+  app.use('/api/safety', safetyRoutes);
+  app.use('/api/admin', adminRoutes);
   app.use('/api/users', userRoutes);
   app.use('/api/posts', postRoutes);
   app.use('/api/messages', messageRoutes);

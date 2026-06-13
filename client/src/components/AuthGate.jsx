@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { api, uploadImage } from '../services/api';
+import { api } from '../services/api';
 import { SITE, loginMeta } from '../data/publicPages';
+import SignupForm from './SignupForm';
 
 const applyLoginSeo = () => {
   const path = window.location.pathname === '/' ? '/' : '/login';
@@ -25,16 +26,11 @@ const applyLoginSeo = () => {
   canonical.setAttribute('href', path === '/' ? `${SITE}/` : `${SITE}/login`);
 };
 
-const initialForm = {
-  name: '',
+const resetForm = {
   email: '',
-  password: '',
-  photo: '',
-  country: '',
-  state: '',
-  district: '',
-  latitude: '',
-  longitude: ''
+  otp: '',
+  resetToken: '',
+  password: ''
 };
 
 export default function AuthGate() {
@@ -44,83 +40,68 @@ export default function AuthGate() {
     applyLoginSeo();
   }, []);
 
-  const [mode, setMode] = useState('signup');
-  const [form, setForm] = useState(initialForm);
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [loadingLocation, setLoadingLocation] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [mode, setMode] = useState('login');
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [otpLogin, setOtpLogin] = useState({ email: '', otp: '' });
+  const [forgot, setForgot] = useState(resetForm);
+  const [loginOtpSent, setLoginOtpSent] = useState(false);
+  const [resetOtpSent, setResetOtpSent] = useState(false);
+  const [resetVerified, setResetVerified] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
 
-  const update = (field) => (event) => {
-    setForm((current) => ({ ...current, [field]: event.target.value }));
-  };
-
-  const uploadPhoto = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const switchMode = (nextMode) => {
+    setMode(nextMode);
     setError('');
-    setUploadingPhoto(true);
-
-    try {
-      const data = await uploadImage(file);
-      setForm((current) => ({ ...current, photo: data.url }));
-      setInfo('Photo upload ho gaya.');
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setUploadingPhoto(false);
-    }
+    setInfo('');
   };
 
-  const useCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      setError('Browser location permission support nahi karta.');
-      return;
-    }
-
-    setLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setForm((current) => ({
-          ...current,
-          latitude: position.coords.latitude.toFixed(6),
-          longitude: position.coords.longitude.toFixed(6)
-        }));
-        setLoadingLocation(false);
-      },
-      () => {
-        setError('Location permission denied. Aap manually latitude/longitude fill kar sakte ho.');
-        setLoadingLocation(false);
-      }
-    );
+  const updateLogin = (field) => (event) => {
+    setLoginForm((current) => ({ ...current, [field]: event.target.value }));
   };
 
-  const submit = async (event) => {
+  const updateOtpLogin = (field) => (event) => {
+    setOtpLogin((current) => ({ ...current, [field]: event.target.value }));
+  };
+
+  const updateForgot = (field) => (event) => {
+    setForgot((current) => ({ ...current, [field]: event.target.value }));
+  };
+
+  const submitPasswordLogin = async (event) => {
     event.preventDefault();
     setError('');
     setInfo('');
     setSubmitting(true);
 
     try {
-      if (mode === 'login') {
-        login(
-          await api('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ email: form.email, password: form.password })
-          })
-        );
-        return;
-      }
+      login(
+        await api('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify(loginForm)
+        })
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-      const data = await api('/auth/send-otp', {
+  const sendLoginOtp = async (event) => {
+    event.preventDefault();
+    setError('');
+    setInfo('');
+    setSubmitting(true);
+
+    try {
+      const data = await api('/auth/login/send-otp', {
         method: 'POST',
-        body: JSON.stringify(form)
+        body: JSON.stringify({ email: otpLogin.email })
       });
-      setOtpSent(true);
+      setLoginOtpSent(true);
+      if (data.devOtp) setOtpLogin((current) => ({ ...current, otp: data.devOtp }));
       setInfo(data.message);
     } catch (err) {
       setError(err.message);
@@ -129,17 +110,117 @@ export default function AuthGate() {
     }
   };
 
-  const verifyOtpAndCreateAccount = async () => {
+  const submitOtpLogin = (event) => {
+    if (!loginOtpSent) {
+      sendLoginOtp(event);
+      return;
+    }
+
+    event.preventDefault();
+
+    if (otpLogin.otp.length === 6) {
+      verifyLoginOtp();
+    }
+  };
+
+  const verifyLoginOtp = async () => {
     setError('');
     setInfo('');
     setSubmitting(true);
 
     try {
-      const session = await api('/auth/verify-otp', {
+      login(
+        await api('/auth/login/verify-otp', {
+          method: 'POST',
+          body: JSON.stringify(otpLogin)
+        })
+      );
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const sendResetOtp = async (event) => {
+    event.preventDefault();
+    setError('');
+    setInfo('');
+    setSubmitting(true);
+
+    try {
+      const data = await api('/auth/password/forgot/send-otp', {
         method: 'POST',
-        body: JSON.stringify({ email: form.email, otp })
+        body: JSON.stringify({ email: forgot.email })
       });
-      login(session);
+      setResetOtpSent(true);
+      setResetVerified(false);
+      if (data.devOtp) setForgot((current) => ({ ...current, otp: data.devOtp }));
+      setInfo(data.message);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const submitForgot = (event) => {
+    if (!resetOtpSent) {
+      sendResetOtp(event);
+      return;
+    }
+
+    event.preventDefault();
+
+    if (!resetVerified && forgot.otp.length === 6) {
+      verifyResetOtp();
+      return;
+    }
+
+    if (resetVerified && forgot.password.length >= 6) {
+      resetPassword();
+    }
+  };
+
+  const verifyResetOtp = async () => {
+    setError('');
+    setInfo('');
+    setSubmitting(true);
+
+    try {
+      const data = await api('/auth/password/forgot/verify', {
+        method: 'POST',
+        body: JSON.stringify({ email: forgot.email, otp: forgot.otp })
+      });
+      setForgot((current) => ({ ...current, resetToken: data.resetToken }));
+      setResetVerified(true);
+      setInfo(data.message);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetPassword = async () => {
+    setError('');
+    setInfo('');
+    setSubmitting(true);
+
+    try {
+      const data = await api('/auth/password/reset', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: forgot.email,
+          resetToken: forgot.resetToken,
+          password: forgot.password
+        })
+      });
+      setInfo(data.message);
+      setForgot(resetForm);
+      setResetOtpSent(false);
+      setResetVerified(false);
+      setMode('login');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -148,78 +229,118 @@ export default function AuthGate() {
   };
 
   return (
-    <main className="auth-shell">
-      <section className="auth-card">
-        <div>
-          <p className="eyebrow">RabtPoint MERN</p>
-          <h1>Login to RabtPoint</h1>
-          <p className="muted">{loginMeta.intro}</p>
+    <main className="auth-shell neon-auth-shell">
+      <section className="auth-card neon-auth-card">
+        <div className="auth-brand">
+          <div className="auth-logo-ring">
+            <span>R</span>
+          </div>
+          <h1 className="auth-title">RabtPoint</h1>
+          <p className="muted auth-subtitle">Sign in or create your account</p>
         </div>
 
         <div className="auth-tabs">
-          <button className={mode === 'signup' ? 'active' : ''} type="button" onClick={() => setMode('signup')}>
-            Sign up
-          </button>
-          <button className={mode === 'login' ? 'active' : ''} type="button" onClick={() => setMode('login')}>
+          <button className={mode === 'login' ? 'active' : ''} type="button" onClick={() => switchMode('login')}>
             Login
+          </button>
+          <button className={mode === 'otpLogin' ? 'active' : ''} type="button" onClick={() => switchMode('otpLogin')}>
+            OTP Login
+          </button>
+          <button className={mode === 'signup' ? 'active' : ''} type="button" onClick={() => switchMode('signup')}>
+            Sign up
           </button>
         </div>
 
-        <form className="auth-form" onSubmit={submit}>
-          {mode === 'signup' && (
-            <>
-              <input required placeholder="Name" value={form.name} onChange={update('name')} />
-              <input placeholder="Photo URL" value={form.photo} onChange={update('photo')} />
-              <label className="file-upload">
-                {uploadingPhoto ? 'Photo upload ho rahi hai...' : 'Upload profile photo'}
-                <input accept="image/*" type="file" onChange={uploadPhoto} />
-              </label>
-            </>
-          )}
+        {mode === 'login' && (
+          <form className="auth-form" onSubmit={submitPasswordLogin}>
+            <input required type="email" placeholder="Email" value={loginForm.email} onChange={updateLogin('email')} />
+            <input required minLength="6" type="password" placeholder="Password" value={loginForm.password} onChange={updateLogin('password')} />
 
-          <input required type="email" placeholder="Email" value={form.email} onChange={update('email')} />
-          <input required minLength="6" type="password" placeholder="Password" value={form.password} onChange={update('password')} />
+            {info && <p className="info-text">{info}</p>}
+            {error && <p className="error-text">{error}</p>}
 
-          {mode === 'signup' && (
-            <>
-              <div className="form-grid">
-                <input required placeholder="Country" value={form.country} onChange={update('country')} />
-                <input required placeholder="State" value={form.state} onChange={update('state')} />
-                <input required placeholder="District" value={form.district} onChange={update('district')} />
-              </div>
-              <button className="secondary-button" type="button" onClick={useCurrentLocation}>
-                {loadingLocation ? 'Location aa rahi hai...' : 'Use current location permission'}
+            <button className="primary-button" type="submit" disabled={submitting}>
+              Login
+            </button>
+            <button className="secondary-button" type="button" onClick={() => switchMode('forgot')}>
+              Forgot password?
+            </button>
+          </form>
+        )}
+
+        {mode === 'otpLogin' && (
+          <form className="auth-form" onSubmit={submitOtpLogin}>
+            <input required type="email" placeholder="Email" value={otpLogin.email} onChange={updateOtpLogin('email')} />
+
+            {loginOtpSent && (
+              <>
+                <input
+                  required
+                  inputMode="numeric"
+                  maxLength="6"
+                  placeholder="6 digit login OTP"
+                  value={otpLogin.otp}
+                  onChange={(event) => setOtpLogin((current) => ({ ...current, otp: event.target.value.replace(/\D/g, '').slice(0, 6) }))}
+                />
+                <button className="secondary-button" type="button" onClick={verifyLoginOtp} disabled={submitting || otpLogin.otp.length !== 6}>
+                  Verify OTP and login
+                </button>
+              </>
+            )}
+
+            {info && <p className="info-text">{info}</p>}
+            {error && <p className="error-text">{error}</p>}
+
+            <button className="primary-button" type="submit" disabled={submitting}>
+              {loginOtpSent ? 'Resend Login OTP' : 'Send Login OTP'}
+            </button>
+          </form>
+        )}
+
+        {mode === 'forgot' && (
+          <form className="auth-form" onSubmit={submitForgot}>
+            <input required type="email" placeholder="Email" value={forgot.email} onChange={updateForgot('email')} />
+
+            {resetOtpSent && !resetVerified && (
+              <>
+                <input
+                  required
+                  inputMode="numeric"
+                  maxLength="6"
+                  placeholder="6 digit reset OTP"
+                  value={forgot.otp}
+                  onChange={(event) => setForgot((current) => ({ ...current, otp: event.target.value.replace(/\D/g, '').slice(0, 6) }))}
+                />
+                <button className="secondary-button" type="button" onClick={verifyResetOtp} disabled={submitting || forgot.otp.length !== 6}>
+                  Verify reset OTP
+                </button>
+              </>
+            )}
+
+            {resetVerified && (
+              <>
+                <input required minLength="6" type="password" placeholder="New password" value={forgot.password} onChange={updateForgot('password')} />
+                <button className="secondary-button" type="button" onClick={resetPassword} disabled={submitting || forgot.password.length < 6}>
+                  Reset password
+                </button>
+              </>
+            )}
+
+            {info && <p className="info-text">{info}</p>}
+            {error && <p className="error-text">{error}</p>}
+
+            {!resetVerified && (
+              <button className="primary-button" type="submit" disabled={submitting}>
+                {resetOtpSent ? 'Resend Reset OTP' : 'Send Reset OTP'}
               </button>
-              <div className="form-grid">
-                <input required type="number" step="any" placeholder="Latitude" value={form.latitude} onChange={update('latitude')} />
-                <input required type="number" step="any" placeholder="Longitude" value={form.longitude} onChange={update('longitude')} />
-              </div>
-            </>
-          )}
+            )}
+            <button className="secondary-button" type="button" onClick={() => switchMode('login')}>
+              Back to login
+            </button>
+          </form>
+        )}
 
-          {info && <p className="info-text">{info}</p>}
-          {error && <p className="error-text">{error}</p>}
-
-          <button className="primary-button" type="submit" disabled={submitting}>
-            {mode === 'signup' ? (otpSent ? 'Resend OTP' : 'Send OTP') : 'Login'}
-          </button>
-
-          {mode === 'signup' && otpSent && (
-            <>
-              <input
-                required
-                inputMode="numeric"
-                maxLength="6"
-                placeholder="6 digit OTP"
-                value={otp}
-                onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
-              />
-              <button className="secondary-button" type="button" onClick={verifyOtpAndCreateAccount} disabled={submitting || otp.length !== 6}>
-                Verify OTP and create account
-              </button>
-            </>
-          )}
-        </form>
+        {mode === 'signup' && <SignupForm />}
       </section>
     </main>
   );
