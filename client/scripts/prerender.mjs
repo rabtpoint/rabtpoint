@@ -193,11 +193,6 @@ const writePage = (path, html) => {
 
 let count = 0;
 
-for (const [path, page] of Object.entries(publicPagesMeta)) {
-  writePage(path, buildHtml(path, page, bodyHtml(path, page), jsonLd(path, page)));
-  count += 1;
-}
-
 const loginPage = {
   eyebrow: 'Login',
   title: loginMeta.title,
@@ -208,6 +203,17 @@ const loginPage = {
   sections: [],
   faqs: []
 };
+
+for (const [path, page] of Object.entries(publicPagesMeta)) {
+  if (path === '/') continue;
+
+  writePage(path, buildHtml(path, page, bodyHtml(path, page), jsonLd(path, page)));
+  count += 1;
+}
+
+writePage('/', buildHtml('/', loginPage, bodyHtml('/', loginPage), jsonLd('/', loginPage)));
+count += 1;
+
 writePage('/login', buildHtml('/login', loginPage, bodyHtml('/login', loginPage), jsonLd('/login', loginPage)));
 count += 1;
 

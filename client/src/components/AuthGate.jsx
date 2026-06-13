@@ -4,6 +4,8 @@ import { api, uploadImage } from '../services/api';
 import { SITE, loginMeta } from '../data/publicPages';
 
 const applyLoginSeo = () => {
+  const path = window.location.pathname === '/' ? '/' : '/login';
+
   document.title = `${loginMeta.title} | RabtPoint`;
 
   let description = document.querySelector('meta[name="description"]');
@@ -20,7 +22,7 @@ const applyLoginSeo = () => {
     canonical.setAttribute('rel', 'canonical');
     document.head.appendChild(canonical);
   }
-  canonical.setAttribute('href', `${SITE}/login`);
+  canonical.setAttribute('href', path === '/' ? `${SITE}/` : `${SITE}/login`);
 };
 
 const initialForm = {
