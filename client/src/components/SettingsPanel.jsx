@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import { refreshCurrentUser, useApp } from '../context/AppContext';
 import { api } from '../services/api';
 
-export default function SettingsPanel() {
+export default function SettingsPanel({ open: controlledOpen, onClose, initialTab = 'profile', showTrigger = true }) {
   const { user, theme, setTheme, updateUser, logout } = useApp();
-  const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState('profile');
+  const [internalOpen, setInternalOpen] = useState(false);
+  const [tab, setTab] = useState(initialTab);
   const [profile, setProfile] = useState({ username: '', bio: '', locationVisibility: 'exact' });
   const [emailChange, setEmailChange] = useState({ newEmail: '', otp: '' });
   const [deletePassword, setDeletePassword] = useState('');
@@ -15,15 +15,29 @@ export default function SettingsPanel() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const open = controlledOpen ?? internalOpen;
+
+  const closePanel = () => {
+    if (onClose) onClose();
+    else setInternalOpen(false);
+  };
+
+  useEffect(() => {
+    if (controlledOpen) setTab(initialTab);
+  }, [controlledOpen, initialTab]);
+
   useEffect(() => {
     if (!open || !user) return;
 
+    setTab(initialTab);
     setProfile({
       username: user.username || '',
       bio: user.bio || '',
       locationVisibility: user.privacy?.locationVisibility || 'exact'
     });
-  }, [open, user]);
+
+    Promise.all([loadSessions(), loadBlocked()]).catch((err) => setError(err.message));
+  }, [open, user, initialTab]);
 
   const loadSessions = async () => {
     const data = await api('/auth/sessions');
@@ -35,15 +49,11 @@ export default function SettingsPanel() {
     setBlocked(data.users || []);
   };
 
-  const openPanel = async () => {
-    setOpen(true);
+  const openPanel = async (nextTab = 'profile') => {
+    setTab(nextTab);
+    setInternalOpen(true);
     setError('');
     setInfo('');
-    try {
-      await Promise.all([loadSessions(), loadBlocked()]);
-    } catch (err) {
-      setError(err.message);
-    }
   };
 
   const saveProfile = async () => {
@@ -160,20 +170,22 @@ export default function SettingsPanel() {
 
   return (
     <>
-      <div className="settings-card">
-        <span>Settings</span>
-        <button className="pill-button" type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
-          {theme === 'dark' ? 'Dark mode' : 'Light mode'}
-        </button>
-        <button className="secondary-button" type="button" onClick={openPanel}>
-          Open
-        </button>
-      </div>
+      {showTrigger && (
+        <div className="settings-card desktop-only-settings">
+          <span>Settings</span>
+          <button className="pill-button" type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            {theme === 'dark' ? 'Dark mode' : 'Light mode'}
+          </button>
+          <button className="secondary-button" type="button" onClick={() => openPanel('profile')}>
+            Open
+          </button>
+        </div>
+      )}
 
       {open && (
-        <div className="modal-backdrop" onClick={() => setOpen(false)}>
+        <div className="modal-backdrop" onClick={closePanel}>
           <article className="settings-modal" onClick={(event) => event.stopPropagation()}>
-            <button className="icon-button close-button" type="button" onClick={() => setOpen(false)}>
+            <button className="icon-button close-button" type="button" onClick={closePanel}>
               x
             </button>
             <h2>Account settings</h2>

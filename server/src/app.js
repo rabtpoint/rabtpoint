@@ -4,8 +4,10 @@ import morgan from 'morgan';
 import accountRoutes from './routes/account.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import authRoutes from './routes/auth.routes.js';
+import discoverRoutes from './routes/discover.routes.js';
 import messageRoutes from './routes/messages.routes.js';
 import postRoutes from './routes/posts.routes.js';
+import reelsRoutes from './routes/reels.routes.js';
 import safetyRoutes from './routes/safety.routes.js';
 import uploadRoutes from './routes/uploads.routes.js';
 import userRoutes from './routes/users.routes.js';
@@ -61,6 +63,8 @@ export const createApp = () => {
   app.use('/api/admin', adminRoutes);
   app.use('/api/users', userRoutes);
   app.use('/api/posts', postRoutes);
+  app.use('/api/discover', discoverRoutes);
+  app.use('/api/reels', reelsRoutes);
   app.use('/api/messages', messageRoutes);
   app.use('/api/uploads', uploadRoutes);
 

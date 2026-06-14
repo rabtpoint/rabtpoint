@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AuthGate from './components/AuthGate';
-import { DesktopNav, MobileNav } from './components/AppNav';
+import AppHeader from './components/AppHeader';
+import { BottomNav } from './components/AppNav';
 import ProfileModal from './components/ProfileModal';
 import SettingsPanel from './components/SettingsPanel';
 import AdminPage from './pages/AdminPage';
@@ -11,12 +12,31 @@ import FriendsPage from './pages/FriendsPage';
 import MapPage from './pages/MapPage';
 import PublicPage, { isPublicPage } from './pages/PublicPage';
 import SearchPage from './pages/SearchPage';
+import { initialTrendSearch, normalizeCountry } from './utils/trendCountry';
 
 function AppContent() {
   const path = window.location.pathname;
-  const { user, logout, theme, setTheme } = useApp();
+  const { user } = useApp();
   const [activePage, setActivePage] = useState(0);
   const [profileUser, setProfileUser] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState('profile');
+  const [trendSearch, setTrendSearch] = useState(() => initialTrendSearch(user));
+  const [discoverRefresh, setDiscoverRefresh] = useState(0);
+
+  useEffect(() => {
+    if (user) setTrendSearch(initialTrendSearch(user));
+  }, [user?.id]);
+
+  const userCountry = useMemo(
+    () => user?.location?.country || normalizeCountry(trendSearch, 'United Kingdom'),
+    [user, trendSearch]
+  );
+
+  const openSettings = (tab = 'profile') => {
+    setSettingsTab(tab);
+    setSettingsOpen(true);
+  };
 
   if (!user) {
     if (path !== '/' && isPublicPage(path)) return <PublicPage path={path} />;
@@ -35,35 +55,22 @@ function AppContent() {
 
   return (
     <main className="app-shell neon-app">
-      <header className="topbar neon-topbar">
-        <div className="brand-block">
-          <span className="brand-glow">RabtPoint</span>
-        </div>
-        <DesktopNav activePage={activePage} onSelect={setActivePage} />
-        <div className="topbar-actions">
-          <button
-            className="theme-toggle"
-            type="button"
-            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-            aria-label="Toggle theme"
-          >
-            {theme === 'light' ? '🌙' : '☀️'}
-          </button>
-          <SettingsPanel />
-          {user.isAdmin && (
-            <a className="secondary-button" href="/admin">
-              Admin
-            </a>
-          )}
-          <button className="secondary-button" type="button" onClick={logout}>
-            Logout
-          </button>
-        </div>
-      </header>
+      <AppHeader
+        trend={trendSearch}
+        onTrendChange={setTrendSearch}
+        onTrendApply={() => setDiscoverRefresh((value) => value + 1)}
+        onViewProfile={setProfileUser}
+        onOpenSettings={openSettings}
+      />
 
       <div className="page-window">
         <div className="page-track" style={{ transform: `translateX(-${activePage * 100}%)` }}>
-          <FeedPage onProfile={setProfileUser} />
+          <FeedPage
+            onProfile={setProfileUser}
+            trend={trendSearch}
+            userCountry={userCountry}
+            refreshKey={discoverRefresh}
+          />
           <FriendsPage onProfile={setProfileUser} currentUser={user} />
           <ChatPage currentUser={user} />
           <MapPage onProfile={setProfileUser} />
@@ -71,7 +78,15 @@ function AppContent() {
         </div>
       </div>
 
-      <MobileNav activePage={activePage} onSelect={setActivePage} />
+      <BottomNav activePage={activePage} onSelect={setActivePage} />
+
+      <SettingsPanel
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        initialTab={settingsTab}
+        showTrigger={false}
+      />
+
       <ProfileModal user={profileUser} onClose={() => setProfileUser(null)} />
     </main>
   );

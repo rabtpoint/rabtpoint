@@ -84,3 +84,22 @@ export const uploadImage = async (file) => {
   if (!response.ok) throw new Error(data.message || 'Image upload failed');
   return data;
 };
+
+export const uploadVideo = async (file) => {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('video', file);
+  const response = await fetch(`${urls.api}/uploads/video`, {
+    method: 'POST',
+    headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: formData
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || 'Video upload failed');
+  return data;
+};
+
+export const fetchDiscover = async (country) => {
+  const params = new URLSearchParams({ country });
+  return api(`/discover?${params.toString()}`);
+};

@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { api, uploadImage } from '../services/api';
 import { LEGAL_VERSION } from '../data/publicPages';
 import LocationDropdowns from './LocationDropdowns';
+import LocationMapPicker from './LocationMapPicker';
 
 const emptyLocation = {
   countryCode: '',
@@ -59,6 +60,14 @@ export default function SignupForm() {
     setNeedsSecureContext(!window.isSecureContext);
   }, []);
 
+  const setMapCoords = ({ latitude: lat, longitude: lng }) => {
+    setLatitude(lat);
+    setLongitude(lng);
+    setLocationGranted(true);
+    setInfo('Location pin saved on map.');
+    setError('');
+  };
+
   const requestLocation = async () => {
     if (!navigator.geolocation) {
       setError('This browser does not support location.');
@@ -92,7 +101,7 @@ export default function SignupForm() {
         setLongitude(position.coords.longitude.toFixed(6));
         setLocationGranted(true);
         setLoadingLocation(false);
-        setInfo('Location saved.');
+        setInfo('GPS location saved on map.');
       },
       (geoError) => {
         setLocationGranted(false);
@@ -106,8 +115,9 @@ export default function SignupForm() {
   };
 
   const locationReady = Boolean(location.country && location.state && location.district && location.city);
+  const coordsReady = Boolean(latitude && longitude);
   const legalReady = acceptTerms && acceptPrivacy && acceptCookies;
-  const stepOneReady = firstName.trim() && lastName.trim() && locationReady && locationGranted && latitude && longitude;
+  const stepOneReady = firstName.trim() && lastName.trim() && locationReady && coordsReady;
   const stepTwoReady = email && password.length >= 6 && legalReady;
 
   const uploadPhoto = async (event) => {
@@ -204,15 +214,17 @@ export default function SignupForm() {
 
           <LocationDropdowns value={location} onChange={setLocation} />
 
-          {needsSecureContext && (
-            <p className="error-text">GPS works only on https:// or http://localhost. Open the app on localhost to test location.</p>
-          )}
+          <LocationMapPicker latitude={latitude} longitude={longitude} onChange={setMapCoords} />
 
-          <button className="secondary-button" type="button" onClick={requestLocation} disabled={loadingLocation || needsSecureContext}>
-            {loadingLocation ? 'Getting location...' : locationGranted ? 'Update location' : 'Allow location'}
+          <button className="secondary-button" type="button" onClick={requestLocation} disabled={loadingLocation}>
+            {loadingLocation ? 'Getting GPS...' : 'Use my GPS location'}
           </button>
 
-          {locationGranted && <p className="info-text">GPS ready</p>}
+          {!window.isSecureContext && (
+            <p className="muted">GPS optional. You can set location manually on the map above.</p>
+          )}
+
+          {coordsReady && <p className="info-text">Location ready</p>}
 
           <button className="primary-button" type="button" disabled={!stepOneReady} onClick={() => setStep(2)}>
             Continue

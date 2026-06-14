@@ -1,47 +1,81 @@
 import { IconChat, IconDiscover, IconFriends, IconMap, IconSearch } from './NavIcons';
 
 export const NAV_ITEMS = [
-  { id: 'discover', label: 'Discover', Icon: IconDiscover },
-  { id: 'friends', label: 'Friends', Icon: IconFriends },
-  { id: 'chat', label: 'Chat', Icon: IconChat },
-  { id: 'map', label: 'Map', Icon: IconMap },
-  { id: 'search', label: 'Search', Icon: IconSearch }
+  { id: 'discover', label: 'Discover', Icon: IconDiscover, glow: 'purple' },
+  { id: 'friends', label: 'Friends', Icon: IconFriends, glow: 'blue' },
+  { id: 'chat', label: 'Chat', Icon: IconChat, center: true, glow: 'blue' },
+  { id: 'map', label: 'Map', Icon: IconMap, glow: 'blue' },
+  { id: 'search', label: 'Search', Icon: IconSearch, glow: 'purple' }
 ];
 
-export function DesktopNav({ activePage, onSelect }) {
-  return (
-    <nav className="desktop-nav" aria-label="Main">
-      {NAV_ITEMS.map((item, index) => (
-        <button
-          key={item.id}
-          className={`desktop-nav-item ${activePage === index ? 'active' : ''}`}
-          type="button"
-          onClick={() => onSelect(index)}
-        >
-          <item.Icon active={activePage === index} />
-          <span>{item.label}</span>
-        </button>
-      ))}
-    </nav>
-  );
-}
+const sideItems = NAV_ITEMS.filter((item) => !item.center);
+const centerItem = NAV_ITEMS.find((item) => item.center);
+const centerIndex = NAV_ITEMS.findIndex((item) => item.center);
 
-export function MobileNav({ activePage, onSelect }) {
+export function BottomNav({ activePage, onSelect }) {
+  const left = sideItems.slice(0, 2);
+  const right = sideItems.slice(2);
+
   return (
-    <nav className="mobile-nav neon-nav" aria-label="Main">
-      {NAV_ITEMS.map((item, index) => (
+    <div className="neon-nav-dock">
+      <nav className="neon-nav-segmented" aria-label="Main">
+        <div className="neon-nav-panel neon-nav-panel-left">
+          {left.map((item) => {
+            const index = NAV_ITEMS.indexOf(item);
+            const active = activePage === index;
+            return (
+              <button
+                key={item.id}
+                className={`neon-seg-btn glow-${item.glow} ${active ? 'active' : ''}`}
+                type="button"
+                onClick={() => onSelect(index)}
+                aria-current={active ? 'page' : undefined}
+              >
+                <span className="mobile-nav-icon">
+                  <item.Icon active={active} />
+                </span>
+                <span className="mobile-nav-label">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
         <button
-          key={item.id}
-          className={`mobile-nav-item ${activePage === index ? 'active' : ''}`}
+          className={`neon-nav-hub ${activePage === centerIndex ? 'active' : ''}`}
           type="button"
-          onClick={() => onSelect(index)}
+          onClick={() => onSelect(centerIndex)}
+          aria-label={centerItem.label}
+          aria-current={activePage === centerIndex ? 'page' : undefined}
         >
-          <span className="mobile-nav-icon">
-            <item.Icon active={activePage === index} />
+          <span className="neon-nav-hub-ring">
+            <span className="neon-nav-hub-core">
+              <centerItem.Icon active={activePage === centerIndex} />
+            </span>
           </span>
-          <span className="mobile-nav-label">{item.label}</span>
+          <span className="mobile-nav-label">{centerItem.label}</span>
         </button>
-      ))}
-    </nav>
+
+        <div className="neon-nav-panel neon-nav-panel-right">
+          {right.map((item) => {
+            const index = NAV_ITEMS.indexOf(item);
+            const active = activePage === index;
+            return (
+              <button
+                key={item.id}
+                className={`neon-seg-btn glow-${item.glow} ${active ? 'active' : ''}`}
+                type="button"
+                onClick={() => onSelect(index)}
+                aria-current={active ? 'page' : undefined}
+              >
+                <span className="mobile-nav-icon">
+                  <item.Icon active={active} />
+                </span>
+                <span className="mobile-nav-label">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
 }

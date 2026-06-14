@@ -39,14 +39,28 @@ const upload = multer({
   }
 });
 
-const uploadBuffer = (file) =>
+const videoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter(req, file, callback) {
+    if (!file.mimetype.startsWith('video/')) {
+      return callback(new Error('Only video files allowed'));
+    }
+
+    callback(null, true);
+  }
+});
+
+const uploadBuffer = (file, resourceType = 'image') =>
   new Promise((resolve, reject) => {
     const cloudinary = configureCloudinary();
     const stream = cloudinary.uploader.upload_stream(
       {
-        folder: 'rabtpoint',
-        resource_type: 'image',
-        transformation: [{ quality: 'auto', fetch_format: 'auto' }]
+        folder: resourceType === 'video' ? 'rabtpoint/reels' : 'rabtpoint',
+        resource_type: resourceType,
+        ...(resourceType === 'image'
+          ? { transformation: [{ quality: 'auto', fetch_format: 'auto' }] }
+          : {})
       },
       (error, result) => {
         if (error) return reject(error);
@@ -76,5 +90,22 @@ const handleImageUpload = async (req, res) => {
 
 router.post('/signup-image', limitSignupUpload, upload.single('image'), handleImageUpload);
 router.post('/image', requireAuth, upload.single('image'), handleImageUpload);
+router.post('/video', requireAuth, videoUpload.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'Video file required' });
+    }
+
+    const result = await uploadBuffer(req.file, 'video');
+
+    res.status(201).json({
+      url: result.secure_url,
+      publicId: result.public_id,
+      duration: result.duration || 0
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 export default router;
